@@ -1,0 +1,79 @@
+go atlas
+
+mesh
+
+## X mesh
+x.mesh loc=0.0 spac=0.1
+x.mesh loc=2.0 spac=0.1
+
+## Y mesh
+## Oxide thickness matched to Tox = 2e-7 cm = 2 nm = 0.002 um from the analytical model
+## Gate metal: 0.0 - 0.1 um
+## Oxide:      0.1 - 0.102 um  (2 nm)
+## Silicon:    0.102 - 4.102 um
+y.mesh loc=0.0     spac=0.02
+y.mesh loc=0.1     spac=0.02
+y.mesh loc=0.101   spac=0.0005
+y.mesh loc=0.102   spac=0.0002
+y.mesh loc=0.104   spac=0.0005
+y.mesh loc=0.15    spac=0.01
+y.mesh loc=0.5     spac=0.02
+y.mesh loc=4.102   spac=0.02
+
+## Regions
+region num=1 material=oxide   x.min=0 x.max=2 y.min=0   y.max=0.102
+region num=2 material=silicon x.min=0 x.max=2 y.min=0.102 y.max=4.102
+
+## Electrodes
+electrode num=1 name=anode   top
+electrode num=2 name=cathode bottom
+
+## Doping (matched to Na = 4e15 cm^-3 from the analytical model)
+doping uniform p.type conc=4e15 region=2
+
+## Physical models
+models srh fermi
+
+## Gate work function
+contact name=anode workfunction=4.1
+
+## Save initial structure
+save outf=moscap_init.str
+
+## Numerical method: Newton with trap damping, recommended for MOS ramps
+## that sweep through flatband, depletion, and strong inversion
+method newton trap maxtrap=10
+
+## Initialize solution
+solve init
+## Start logging
+log outf=moscap.log
+
+solve name=anode v=0
+save outf=vg0.str
+
+solve name=anode v=0.5
+save outf=vg05.str
+
+solve name=anode v=1.0
+save outf=vg10.str
+
+
+
+
+## Bias sweep with small-signal AC analysis at each point -> gives C-V directly
+solve name=anode vstep=0.1 vfinal=5.0 
+
+
+## Stop logging
+log off
+
+## Save final structure
+save outf=moscap_final.str
+
+## Plot
+tonyplot moscap_init.str
+tonyplot moscap_final.str
+tonyplot moscap.log
+
+quit
